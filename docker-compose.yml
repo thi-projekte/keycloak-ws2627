@@ -42,10 +42,13 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - intern                # nur intern, kein Zugriff von außen
+      - intern   
+      - databasus             # nur intern, kein Zugriff von außen
 
 networks:
   nginx-proxy-manager:
+    external: true
+  databasus:
     external: true            # existiert bereits auf dem Host
   intern:
     driver: bridge            # vom Stack verwaltet
