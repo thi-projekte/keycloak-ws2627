@@ -1,0 +1,49 @@
+name: Keycloak-Image bauen und pushen
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - Dockerfile
+      - terramax-realm.json
+      - .github/workflows/keycloak-image.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login bei GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker Buildx einrichten
+        uses: docker/setup-buildx-action@v3
+
+      - name: Tags und Labels bestimmen
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          # metadata-action wandelt den Namen automatisch in Kleinbuchstaben um
+          images: ghcr.io/${{ github.repository_owner }}/terramax-keycloak
+          tags: |
+            type=raw,value=latest
+            type=sha
+
+      - name: Bauen und pushen
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
